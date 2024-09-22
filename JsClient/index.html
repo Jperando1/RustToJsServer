@@ -1,14 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="style.css">
+<link rel="stylesheet" href="./web/style.css">
 </head>
 <body>
 
-<button id="getTime">Get Time</button>
+<button id="getTime">Refresh</button>
+<button id="messageServer">Message Server</button>
 
 <p id="time"></p>
 
+<center>
+<video id="vidFrame" src="http://127.0.0.1:8080/files/rocketVid.mp4"></video>
+</center>
+
+<label for="fileSelect">Select Desired Video:</label>
+
+<select name="fileSelect" id="fileSelect">
+
+</select> 
+
 </body>
-<script src="script.js"></script>
+<script src="./web/script.js"></script>
 </html>
