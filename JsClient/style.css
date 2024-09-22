@@ -1,0 +1,10 @@
+body{
+    background:aqua;
+}
+
+#getTime{
+    width:20px;
+    height:10px;
+    color:white;
+    background-color:black;
+}
