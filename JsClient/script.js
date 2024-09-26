@@ -3,6 +3,7 @@ const getTimeBtn = document.getElementById('getTime');
 const fileList = document.getElementById('fileSelect');
 const vidFrame = document.getElementById('vidFrame');
 const actionBtn = document.getElementById('messageServer');
+let myname = "hello";
 
 //When page loads, initialize things
 document.body.onload = (e) => {
@@ -35,9 +36,17 @@ async function getTime(){
 
 //Send request to server, not implemented well yet...
 async function postMessage(){
-  fetch('http://127.0.0.1:8080/action')
-  .then(response => response.json())
+  const myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/json");
+  const response = await fetch("http://127.0.0.1:8080/action", {
+    method: "POST",
+    body: JSON.stringify({ name: "example" }),
+    headers: myHeaders,
+  });
+  const json = await response;
+  console.log(json);
 }
+
 
 //Retreive a json object containing files in 'public' directory
 //TODO: Add support for sub-directories

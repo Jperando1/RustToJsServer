@@ -1,5 +1,5 @@
 //Imports
-use actix_web::{get, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use actix_web::{body, get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_cors::Cors;
 use actix_files::NamedFile;
 use actix_files as fs;
@@ -7,6 +7,8 @@ use std::path::PathBuf;
 use std::fs as stdfs;
 use chrono::prelude::*;
 use serde::Serialize;
+use std::fs::File;
+use std::io::prelude::*;
 
 //Struct for making file list json object, can be expanded
 #[derive(Serialize)]
@@ -27,7 +29,7 @@ async fn main() -> std::io::Result<()> {
             .route("/hey", web::get().to(manual_hello)) //Serves hello message
             .route("/time", web::get().to(serve_time)) //Serves time
             .route("/filelist", web::get().to(serve_file_list))
-            .route("/action", web::get().to(print_message))
+            .route("/action", web::post().to(print_message))
             .route("/{filename:.*}", web::get().to(index)) //Give access to filesystem
             
     })
@@ -53,9 +55,14 @@ async fn serve_time() -> impl Responder {
     HttpResponse::Ok().json(now)
 }
 
-//Print a message on request from client, doesn't really do anything yet
-async fn print_message() -> impl Responder {
-    println!("Message Recieved!");
+//print out the body of the request
+async fn print_message(name: String) -> impl Responder {
+    println!("Request body: {}", name);
+    let json: serde_json::Value =
+        serde_json::from_str(name.as_str()).expect("JSON was not well-formatted");
+    println!("Parsed JSON: {:?}", json.as_object().unwrap().get("name").unwrap());
+    mkdir(json.as_object().unwrap().get("name").unwrap().to_string());
+    
     HttpResponse::Ok().json("acknowledged")
 }
 
@@ -78,4 +85,11 @@ async fn serve_file_list() -> impl Responder {
 async fn index(req: HttpRequest) -> actix_web::Result<NamedFile> {
     let path: PathBuf = req.match_info().query("filename").parse().unwrap();
     Ok(NamedFile::open(path)?)
+}
+//Function makes a file named based on the input parameter string
+fn mkdir(arg: String) -> std::io::Result<()> {
+    let a = "../public/";
+    let mut file = File::create(a.to_string()+ arg.as_str() +".txt")?;
+    file.write_all(b"Hello, world!")?;
+    Ok(())
 }
