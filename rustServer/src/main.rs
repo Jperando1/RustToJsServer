@@ -4,7 +4,7 @@ use actix_cors::Cors;
 use actix_files::NamedFile;
 use actix_files as fs;
 use std::path::PathBuf;
-use std::fs as stdfs;
+use std::{fs as stdfs, string};
 use chrono::prelude::*;
 use serde::Serialize;
 use std::fs::File;
@@ -16,9 +16,11 @@ struct FileList {
     path: String
 }
 
+static mut currentFilePath: &str = "";
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-
+    let mut filePath = "";
     //Create the HTTP server
     HttpServer::new(|| {
         let cors = Cors::permissive();
@@ -29,7 +31,7 @@ async fn main() -> std::io::Result<()> {
             .route("/hey", web::get().to(manual_hello)) //Serves hello message
             .route("/time", web::get().to(serve_time)) //Serves time
             .route("/filelist", web::get().to(serve_file_list))
-            .route("/action", web::post().to(print_message))
+            .route("/action", web::post().to(handle_msgs))
             .route("/{filename:.*}", web::get().to(index)) //Give access to filesystem
             
     })
@@ -55,6 +57,16 @@ async fn serve_time() -> impl Responder {
     HttpResponse::Ok().json(now)
 }
 
+async fn handle_msgs(msg: String) -> impl Responder {
+    match msg.as_str(){
+        "print"=>print_message(msg).await,
+        "mkfl"=>print_message(msg).await,
+        "cd"=>print_message(msg).await,
+        _=>print_message(msg).await,
+    };
+    HttpResponse::Ok().body("acknowledged")
+}
+
 //print out the body of the request
 async fn print_message(name: String) -> impl Responder {
     println!("Request body: {}", name);
@@ -64,6 +76,27 @@ async fn print_message(name: String) -> impl Responder {
     mkdir(json.as_object().unwrap().get("name").unwrap().to_string());
     
     HttpResponse::Ok().json("acknowledged")
+}
+
+//Changes the current file path
+async fn change_file_path(toPath: String) -> impl Responder {
+    serve_subdirectories(toPath).await;
+    HttpResponse::Ok().json("acknowledged")
+}
+
+//Serve a json object containing all files in the public folder
+async fn serve_subdirectories(sub: String) -> impl Responder {
+    let paths = stdfs::read_dir("../public".to_string() + sub.as_str()).unwrap();
+    let mut path_list = Vec::new();
+    let mut temp_string;
+    for path in paths {
+        temp_string = path.unwrap().path().display().to_string();
+        let json_builder = FileList{
+            path: temp_string,
+        };
+        path_list.push(json_builder);
+    }
+    HttpResponse::Ok().json(path_list)
 }
 
 //Serve a json object containing all files in the public folder

@@ -40,7 +40,7 @@ async function postMessage(){
   myHeaders.append("Content-Type", "application/json");
   const response = await fetch("http://127.0.0.1:8080/action", {
     method: "POST",
-    body: JSON.stringify({ name: "example" }),
+    body: JSON.stringify({ name: "example", path: "/sub"}),
     headers: myHeaders,
   });
   const json = await response;
@@ -57,7 +57,7 @@ async function getFileList(){
 }
 
 //Populate the dropdown menu
-async function fillList(){
+/*async function fillList(){
   fileList.innerHTML = "";
   let list = await getFileList();
   console.log(list);
@@ -65,4 +65,28 @@ async function fillList(){
     let realPath = '/files/' + list[i].path.slice(10);
     fileList.options[fileList.options.length] = new Option(list[i].path.slice(10), realPath);
   }
+}*/
+
+//Populate the dropdown menu
+async function fillList(){
+  fileList.innerHTML = "";
+  let list = await getFileList();
+  console.log(list);
+  for(let i = 0; i < list.length; i++){
+    let realPath = '/files/' + list[i].path.slice(10);
+    fileList.options[fileList.options.length] = new Option(list[i].path.slice(10), realPath);
+    let ul = document.getElementById("fileMenu");
+    let li = document.createElement("li");
+    let a = document.createElement("a");
+    li.appendChild(document.createTextNode(list[i].path.slice(10)));
+    li.setAttribute("id", "fileOption");
+    li.setAttribute("onclick", "test(\""+realPath+"\")");
+    li.setAttribute("id", "fileLink");
+    li.appendChild(a);
+    ul.appendChild(li);
+  }
+}
+
+function test(path){
+  console.log(path);
 }
