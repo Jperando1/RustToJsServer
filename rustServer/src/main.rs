@@ -7,13 +7,14 @@ use std::path::PathBuf;
 use std::{fs as stdfs, string};
 use chrono::prelude::*;
 use serde::Serialize;
-use std::fs::File;
+use std::fs::{File, Metadata};
 use std::io::prelude::*;
 
 //Struct for making file list json object, can be expanded
 #[derive(Serialize)]
 struct FileList {
-    path: String
+    path: String,
+    is_dir: bool,
 }
 
 static mut currentFilePath: &str = "";
@@ -57,57 +58,73 @@ async fn serve_time() -> impl Responder {
     HttpResponse::Ok().json(now)
 }
 
-async fn handle_msgs(msg: String) -> impl Responder {
-    match msg.as_str(){
-        "print"=>print_message(msg).await,
-        "mkfl"=>print_message(msg).await,
-        "cd"=>print_message(msg).await,
-        _=>print_message(msg).await,
+async fn handle_msgs(raw_json: String) -> impl Responder {
+    let json: serde_json::Value =
+        serde_json::from_str(raw_json.as_str()).expect("JSON was not well-formatted");
+    let name = json.as_object().unwrap().get("name").unwrap().to_string().split("\"").collect::<Vec<&str>>()[1].to_string();
+    println!("Calling: {:?}", name);
+    let msg = json.as_object().unwrap().get("msg").unwrap().to_string().split("\"").collect::<Vec<&str>>()[1].to_string();
+    let mut res = Vec::new();
+    if(name.as_str() == "cd"){
+        println!("Message: {:?}", msg);
+        res = serve_subdirectories(msg).await;
+    } else{
+        match msg.as_str(){
+            "print"=>print_message(msg).await,
+            "mkfl"=>print_message(msg).await,
+            //"cd"=>serve_subdirectories(msg).await,
+            _=>print_message(msg).await,
+        };
     };
-    HttpResponse::Ok().body("acknowledged")
+    println!("{:?}",res[0].path);
+    HttpResponse::Ok().json(res)
 }
 
 //print out the body of the request
-async fn print_message(name: String) -> impl Responder {
-    println!("Request body: {}", name);
-    let json: serde_json::Value =
-        serde_json::from_str(name.as_str()).expect("JSON was not well-formatted");
-    println!("Parsed JSON: {:?}", json.as_object().unwrap().get("name").unwrap());
-    mkdir(json.as_object().unwrap().get("name").unwrap().to_string());
+async fn print_message(msg: String) -> impl Responder {
+
+    mkdir(msg);
     
-    HttpResponse::Ok().json("acknowledged")
+    HttpResponse::Ok().json("Acknowledged")
 }
 
 //Changes the current file path
 async fn change_file_path(toPath: String) -> impl Responder {
     serve_subdirectories(toPath).await;
-    HttpResponse::Ok().json("acknowledged")
+    HttpResponse::Ok().json("Acknowledged")
 }
 
 //Serve a json object containing all files in the public folder
-async fn serve_subdirectories(sub: String) -> impl Responder {
+async fn serve_subdirectories(sub: String) -> Vec<FileList>{
     let paths = stdfs::read_dir("../public".to_string() + sub.as_str()).unwrap();
     let mut path_list = Vec::new();
     let mut temp_string;
     for path in paths {
         temp_string = path.unwrap().path().display().to_string();
+        let md = PathBuf::from(temp_string.clone());
+        let is_directory = md.is_dir();
         let json_builder = FileList{
             path: temp_string,
+            is_dir: is_directory,
         };
         path_list.push(json_builder);
     }
-    HttpResponse::Ok().json(path_list)
+    return path_list
 }
 
 //Serve a json object containing all files in the public folder
 async fn serve_file_list() -> impl Responder {
     let paths = stdfs::read_dir("../public").unwrap();
+    println!("{:?}", paths);
     let mut path_list = Vec::new();
     let mut temp_string;
     for path in paths {
         temp_string = path.unwrap().path().display().to_string();
+        let md = PathBuf::from(temp_string.clone());
+        let is_directory = md.is_dir();
         let json_builder = FileList{
             path: temp_string,
+            is_dir: is_directory,
         };
         path_list.push(json_builder);
     }

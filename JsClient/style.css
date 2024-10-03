@@ -40,6 +40,17 @@ nav ul{overflow:hidden; overflow-y:scroll;}
     text-decoration: none;
 }
 
+#backDir{
+    display: block;
+    padding: 5px 30px 5px 10px;
+    display: block;
+    color:rgb(165, 165, 165);
+    background-color:rgb(44, 44, 44);
+    border-radius: 10px;
+    margin: 5px 5px;
+    text-decoration: none;
+}
+
 #fileLink:hover{
     color:rgb(253, 253, 253);
     background-color:rgb(37, 37, 37);
