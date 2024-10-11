@@ -38,6 +38,7 @@ nav ul{overflow:hidden; overflow-y:scroll;}
     border-radius: 10px;
     margin: 5px 5px;
     text-decoration: none;
+    user-select: none;
 }
 
 #backDir{

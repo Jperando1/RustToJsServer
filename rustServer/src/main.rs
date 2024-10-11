@@ -1,13 +1,19 @@
+// File Server Code
+// Authors: William Lucca, Jonathan Baldwin, and Dr. Pounds
+//// TODO ////
+/// Add a way to call command functions in subdirectories
+/// Potentially utilize the dirStack from the client side, or create one here
+
 //Imports
-use actix_web::{body, get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use actix_web::{get, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_cors::Cors;
 use actix_files::NamedFile;
 use actix_files as fs;
 use std::path::PathBuf;
-use std::{fs as stdfs, string};
+use std::fs as stdfs;
 use chrono::prelude::*;
 use serde::Serialize;
-use std::fs::{File, Metadata};
+use std::fs::File;
 use std::io::prelude::*;
 
 //Struct for making file list json object, can be expanded
@@ -17,11 +23,8 @@ struct FileList {
     is_dir: bool,
 }
 
-static mut currentFilePath: &str = "";
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let mut filePath = "";
     //Create the HTTP server
     HttpServer::new(|| {
         let cors = Cors::permissive();
@@ -68,7 +71,19 @@ async fn handle_msgs(raw_json: String) -> impl Responder {
     if(name.as_str() == "cd"){
         println!("Message: {:?}", msg);
         res = serve_subdirectories(msg).await;
-    } else{
+    } else if(name.as_str() == "touch"){
+        println!("Message: {:?}", msg);
+        touch(msg).unwrap();
+    } else if(name.as_str() == "mkdir"){
+        println!("Message: {:?}", msg);
+        mkdir(msg).unwrap();
+    } else if(name.as_str() == "rm"){
+        println!("Message: {:?}", msg);
+        rm(msg).unwrap();
+    } else if(name.as_str() == "rename"){
+        println!("Message: {:?}", msg);
+        rename(msg).unwrap();
+    } else {
         match msg.as_str(){
             "print"=>print_message(msg).await,
             "mkfl"=>print_message(msg).await,
@@ -76,23 +91,23 @@ async fn handle_msgs(raw_json: String) -> impl Responder {
             _=>print_message(msg).await,
         };
     };
-    println!("{:?}",res[0].path);
+    //println!("{:?}",res[0].path);
     HttpResponse::Ok().json(res)
 }
 
 //print out the body of the request
 async fn print_message(msg: String) -> impl Responder {
 
-    mkdir(msg);
+    print!("{:?}", msg);
     
     HttpResponse::Ok().json("Acknowledged")
 }
 
 //Changes the current file path
-async fn change_file_path(toPath: String) -> impl Responder {
+/*async fn change_file_path(toPath: String) -> impl Responder {
     serve_subdirectories(toPath).await;
     HttpResponse::Ok().json("Acknowledged")
-}
+}*/
 
 //Serve a json object containing all files in the public folder
 async fn serve_subdirectories(sub: String) -> Vec<FileList>{
@@ -137,9 +152,40 @@ async fn index(req: HttpRequest) -> actix_web::Result<NamedFile> {
     Ok(NamedFile::open(path)?)
 }
 //Function makes a file named based on the input parameter string
-fn mkdir(arg: String) -> std::io::Result<()> {
+//  Currently only makes a txt file, remove .txt string to let user specify
+fn touch(arg: String) -> std::io::Result<()> {
     let a = "../public/";
     let mut file = File::create(a.to_string()+ arg.as_str() +".txt")?;
-    file.write_all(b"Hello, world!")?;
+    file.write_all(b"")?;
     Ok(())
 }
+
+//Creates a directory based on the input parameter string
+fn mkdir(arg: String) -> std::io::Result<()> {
+    let a = "../public/";
+    stdfs::create_dir(a.to_string()+ arg.as_str())?;
+    Ok(())
+}
+
+//Removes a file or directory based on the input parameter string
+fn rm(arg: String) -> std::io::Result<()> {
+    let a = "../public/";
+    if(PathBuf::from(a.to_string()+ arg.as_str()).is_file()){
+        stdfs::remove_file(a.to_string()+ arg.as_str())?;
+    } else if(PathBuf::from(a.to_string()+ arg.as_str()).is_dir()){
+        stdfs::remove_dir_all(a.to_string()+ arg.as_str())?;
+    }
+    Ok(())
+}
+
+//Rename file or directory based on given input string
+//  Takes two arguments in one string, separated by a comma. ARG1 is the file to be renamed, ARG2 is the new name
+fn rename(arg: String) -> std::io::Result<()> {
+    let a = "../public/";
+    let names: Vec<&str> = arg.split(",").collect();
+    stdfs::rename(a.to_string()+ names[0], a.to_string()+ names[1])?;
+    Ok(())
+}
+
+//TODO: Implement move function
+

@@ -1,28 +1,31 @@
+<!-- File Manager HTML Document -->
+ <!-- TODO: Basically all UI work, this is just for testing the client/server code -->
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" href="./web/style.css">
+    <title>Rusteez File Manager</title>
+    <link rel="stylesheet" href="./web/style.css">
+    <link rel="icon" type="image/x-icon" href="/web/favicon.ico">
 </head>
 <body>
 
-<button id="getTime">Refresh</button>
-<button id="messageServer">Message Server</button>
+    <button id="getTime">Refresh</button>
+    <button id="messageServer">Message Server</button>
 
-<p id="time"></p>
+    <p id="time"></p>
 
-<center>
-<video controls="true" id="vidFrame" src="http://127.0.0.1:8080/files/rocketVid.mp4"></video>
-</center>
+    <center>
+        <video controls="true" id="vidFrame" src="/files/rocketVid.mp4"></video>
+    </center>
 
-<label for="fileSelect">Select Desired Video:</label>
+    <label for="fileSelect">Select Desired Video:</label>
 
-<select name="fileSelect" id="fileSelect">
 
-</select> 
+    </select> 
 
-<nav>
-    <ul id="fileMenu"></ul>
-</nav>
+    <nav>
+        <ul id="fileMenu"></ul>
+    </nav>
 
 </body>
 <script src="./web/script.js"></script>
