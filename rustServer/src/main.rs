@@ -1,5 +1,4 @@
 // File Server Code
-// Authors: William Lucca, Jonathan Baldwin, and Dr. Pounds
 //// TODO ////
 /// Add a way to call command functions in subdirectories
 /// Potentially utilize the dirStack from the client side, or create one here
